@@ -1,2 +1,9 @@
+*.o
+*.out
+*.elf
 *.exe
-*.txt
+.vscode
+build/
+googletest/
+.venv/
+.pytest_cache/
