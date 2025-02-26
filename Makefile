@@ -32,9 +32,6 @@ run-float: $(APP_EXE)
 run-unit-test: $(UNIT_TEST_EXE)
 	./$(UNIT_TEST_EXE)
 
-format:
-	clang-format -i *.c *.h tests/unit/*.cpp
-
 clean:
 	rm -f $(APP_EXE) $(UNIT_TEST_EXE)
 	rm -rf venv
