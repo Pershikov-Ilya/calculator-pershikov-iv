@@ -3,7 +3,7 @@ CXX     = g++
 CFLAGS  = -Wall -Wextra -O2
 CXXFLAGS= -Wall -Wextra -O2
 
-MAIN_SRC        = main.c
+MAIN_SRC        = ./src/main.c
 UNIT_TEST_SRC   = tests/unit/unit-test.cpp
 
 APP_EXE         = app.exe

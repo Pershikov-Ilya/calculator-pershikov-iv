@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-#include "main.c"
+#include "src/main.c"
 }
 
 static int evaluate_int(const char *expr) {
