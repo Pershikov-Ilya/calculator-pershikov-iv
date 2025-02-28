@@ -1,37 +1,77 @@
+# Компиляторы и флаги
 CC      = gcc
 CXX     = g++
-CFLAGS  = -Wall -Wextra -O2
-CXXFLAGS= -Wall -Wextra -O2
+CFLAGS  = -Wall -Wextra -Wpedantic -Werror -std=c11
+CXXFLAGS= -Wall -Wextra -Wpedantic -Werror -std=c++17
 
-MAIN_SRC        = ./src/main.c
-UNIT_TEST_SRC   = tests/unit/unit-test.cpp
+# Каталоги
+BUILD_DIR             = build
+SRC_DIR               = src
+UNIT_TEST_DIR         = tests/unit
+INTEGRATION_TEST_DIR  = tests/integration
 
-APP_EXE         = app.exe
-UNIT_TEST_EXE   = unit-tests.exe
+# Исходники приложения
+MAIN_SRC      = $(SRC_DIR)/main.c
 
-GTEST_LIBS      = -lgtest -lgtest_main -pthread
+# Исполняемый файл приложения
+APP_EXE       = $(BUILD_DIR)/app.exe
 
-.PHONY: 
-	all clean run-int run-float run-unit-test venv run-integration-tests
+# Исходник юнит-тестов
+UNIT_TEST_SRC = $(UNIT_TEST_DIR)/unit-test.cpp
+# Объектный файл юнит-тестов
+UNIT_TEST_OBJ = $(BUILD_DIR)/unit-test.o
+# Исполняемый файл юнит-тестов
+UNIT_TEST_EXE = $(BUILD_DIR)/unit-tests.exe
+
+# Линковка для тестов (GoogleTest)
+GTEST_LIBS        = -lgtest -lgtest_main -pthread
+
+# Виртуальное окружение для интеграционных тестов
+VENV    = venv
+PYTHON  = $(VENV)/bin/python
+PIP     = $(VENV)/bin/pip
+
+.PHONY: all clean run-int run-float run-unit-test run-integration-tests venv
 
 all: $(APP_EXE) $(UNIT_TEST_EXE)
 
-$(APP_EXE): $(MAIN_SRC)
-	$(CC) $(CFLAGS) $(MAIN_SRC) -o $(APP_EXE)
+# Создание каталога build
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-$(UNIT_TEST_EXE): $(MAIN_SRC) $(UNIT_TEST_SRC)
-	mkdir -p build 
-	$(CXX) -std=c++14 $(CXXFLAGS) -DUNIT_TEST -I. $(UNIT_TEST_SRC) $(MAIN_SRC) -o $(UNIT_TEST_EXE) $(GTEST_LIBS)
+# Сборка приложения
+$(APP_EXE): $(MAIN_SRC) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(MAIN_SRC) -o $(BUILD_DIR)/main.o
+	$(CC) $(CFLAGS) $(BUILD_DIR)/main.o -o $(APP_EXE) -lstdc++ -lm
 
+# Сборка юнит-тестов (файл unit-test.cpp уже включает src/main.c с UNIT_TEST)
+$(UNIT_TEST_OBJ): $(UNIT_TEST_SRC) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -DUNIT_TEST -I. -c $(UNIT_TEST_SRC) -o $(UNIT_TEST_OBJ)
+
+$(UNIT_TEST_EXE): $(UNIT_TEST_OBJ) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(UNIT_TEST_OBJ) -o $(UNIT_TEST_EXE) $(GTEST_LIBS)
+
+# Цель для создания виртуального окружения и установки pytest
+venv:
+	python3 -m venv $(VENV)
+	$(PIP) install --upgrade pip
+	$(PIP) install pytest
+
+# Запуск приложения (int режим)
 run-int: $(APP_EXE)
 	./$(APP_EXE)
 
+# Запуск приложения (float режим)
 run-float: $(APP_EXE)
 	./$(APP_EXE) --float
 
+# Запуск юнит-тестов
 run-unit-test: $(UNIT_TEST_EXE)
 	./$(UNIT_TEST_EXE)
 
+# Запуск интеграционных тестов (например, через pytest)
+run-integration-tests: $(APP_EXE)
+	APP_PATH=$(abspath $(APP_EXE)) $(PYTHON) -m pytest -v $(INTEGRATION_TEST_DIR)
+
 clean:
-	rm -f $(APP_EXE) $(UNIT_TEST_EXE)
-	rm -rf venv
+	rm -rf $(BUILD_DIR) $(VENV)
